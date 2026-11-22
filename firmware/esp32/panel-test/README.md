@@ -1,14 +1,15 @@
 # Bare-metal panel firmware
 
-Drives the HU-058D display from an ESP32-WROOM-32 with nothing but the Arduino
-core. 
+Drives the HU-058D display from an ESP32-C3 Zero with nothing but the Arduino
+core.
 
-Everything specific to this board sits in tables near the top of
-`src/main.cpp`, and the only hardware-dependent code is the four GPIO writes
-inside `sendFrame`. It is also the fastest way to find out which LED positions
-your particular board has fitted.
+Everything specific to this board sits in the pin constants and tables near the
+top of `src/main.cpp`, and the only hardware-dependent code is those constants
+and the GPIO register macros. It is also the fastest way to find out which LED
+positions your particular board has fitted.
 
-The mapping it uses is documented in `../../../docs/display-map.md`.
+The mapping it uses is documented in `../../../docs/display-map.md` and matches
+the ESPHome config in `../../esphome/clock.yaml`.
 
 The color scheme here is the simple one: three duty levels per channel, from
 at most two sub-frames per COM pair, which is close to what the stock 8051
@@ -21,17 +22,21 @@ Four signals and a ground, into the empty DIP-16 MCU footprint. Do not install
 the 8051 or the ESP-01S, and pull them if you already did. Two devices on one
 bus will fight.
 
-Full build notes are in `../../../docs/wiring.md`.
+Full build notes are in `../../../docs/wiring.md`; its wire table is the
+WROOM-32 version, while the C3 pins are in the table above.
 
-| ESP32 | Socket pin | Net | Use |
+| C3 GPIO | Socket pin | Net | Use |
 | --- | --- | --- | --- |
-| GPIO22 | 14 on HU-058D; 16 on HU-058 / HU-058SE | CLK | Driver 1 clock |
-| GPIO21 | 5 | DATA | Driver 1 data |
-| GPIO19 | 1 | CLK_1 | Driver 2 clock |
-| GPIO18 | 2 | DATA_1 | Driver 2 data |
+| GPIO0 | 14 on HU-058D; 16 on HU-058 / HU-058SE | CLK | Driver 1 clock |
+| GPIO1 | 5 | DATA | Driver 1 data |
+| GPIO6 | 1 | CLK_1 | Driver 2 clock |
+| GPIO7 | 2 | DATA_1 | Driver 2 data |
 | GND | 8 | GND | Common ground |
 
-The VIN on the ESP32 can be connected directly to the USB jack on the clock, so either USB will power both components. 
+On the bench, power the C3 Zero from its USB-C port and the clock from its own
+USB, and tie the grounds together through socket pin 8. Do not also wire the
+C3's 5V pin to the clock's 5V rail in that setup. Use the C3 Zero's own USB-C
+port for flashing and the serial monitor.
 
 ## Build
 
@@ -62,7 +67,7 @@ your board's real population straight off the panel.
 
 ## Levels
 
-The 3.3V outputs of an ESP32 drive the panel perfectly without a level shifter
+The 3.3V outputs of the ESP32-C3 drive the panel perfectly without a level shifter
 
 If levels ever are marginal the symptom is not a dead display but an
 intermittent one, because the latch triggers on a data edge while the clock is

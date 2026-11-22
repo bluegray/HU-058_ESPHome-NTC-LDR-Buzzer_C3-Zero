@@ -20,7 +20,7 @@ esphome:
           id(panel)->set_effect(ef == "Color Cycle" ? 1 : ef == "Flash" ? 2 : 0);
 
 esp32:
-  board: esp32dev
+  board: esp32-c3-devkitm-1
   framework:
     type: arduino
 
@@ -31,6 +31,9 @@ external_components:
 
 logger:
   level: INFO
+  # GPIO20/21 carry the buttons, so keep the log output on the native USB
+  # Serial/JTAG port instead of UART0.
+  hardware_uart: USB_SERIAL_JTAG
 
 api:
   encryption:
@@ -176,10 +179,10 @@ time:
 
 aip33628:
   id: panel
-  clk_pin: GPIO22
-  data_pin: GPIO21
-  clk2_pin: GPIO19
-  data2_pin: GPIO18
+  clk_pin: GPIO0
+  data_pin: GPIO1
+  clk2_pin: GPIO6
+  data2_pin: GPIO7
   time_id: ha_time
   twelve_hour: false
   blink_colon: true
@@ -195,7 +198,7 @@ light:
 
 sensor:
   - platform: adc
-    pin: GPIO34
+    pin: GPIO3
     id: ntc_adc
     attenuation: auto
     update_interval: 5s
@@ -218,7 +221,7 @@ sensor:
     accuracy_decimals: 1
 
   - platform: adc
-    pin: GPIO35
+    pin: GPIO4
     id: light_sensor
     name: Light
     attenuation: auto
@@ -240,7 +243,7 @@ binary_sensor:
     id: button_1
     name: Button 1
     pin:
-      number: GPIO32
+      number: GPIO20
       mode:
         input: true
         pullup: true
@@ -253,7 +256,7 @@ binary_sensor:
     id: button_2
     name: Button 2
     pin:
-      number: GPIO33
+      number: GPIO21
       mode:
         input: true
         pullup: true
@@ -299,7 +302,7 @@ switch:
 
 output:
   - platform: ledc
-    pin: GPIO25
+    pin: GPIO5
     id: buzzer_output
     frequency: 2000 Hz
     inverted: true

@@ -1,8 +1,8 @@
 # HU-058 ESPHome — NTC, LDR and Buzzer on an ESP32-C3 Zero
 
 Open firmware for the HU-058 family clocks, with added buzzer, NTC and light
-sensor. This README adds a suggested ESP32-C3 Zero mapping to the ESPHome
-firmware described in the original readme.
+sensor. This README documents the ESP32-C3 Zero pin mapping used by the
+checked-in ESPHome config; the full project write-up is in the original readme.
 
 ## Original readme
 
@@ -35,7 +35,7 @@ GPIO34/35/25 do not exist on the C3.
 
 [ESP32-C3 Zero pinout schematic](reference/esp32-c3-zero-pinout-high-resolution.svg)
 
-## Suggested mapping for the 16-pin MCU footprint
+## Mapping for the 16-pin MCU footprint
 
 The C3 Zero header is labelled by GPIO number (`IO0`–`IO10`, `IO18`–`IO21`,
 plus `5V`, `3V3` and `GND`), so each row below names both the DIP-16 socket pin
@@ -93,8 +93,8 @@ revision before soldering.
   cold). The original conversion already cuts that 5V feed and connects 3.3V
   instead; if you have not done that mod, do it (or add a divider) before
   connecting them to GPIO3/GPIO4.
-- Update `clock.yaml` to match: `board:` (e.g. `esp32-c3-devkitm-1`),
-  `clk_pin`/`data_pin` (CLK_1/DATA_1), `clk2_pin`/`data2_pin`
-  (CLK_2/DATA_2), both ADC pins, both button pins and the buzzer `pin:`, plus
-  the `send_pair_()` register-union change described in
-  `firmware/esphome/README.md`.
+- `clock.yaml` already uses this mapping: `board: esp32-c3-devkitm-1`,
+  `clk_pin`/`data_pin` = CLK_1/DATA_1, `clk2_pin`/`data2_pin` =
+  CLK_2/DATA_2, the ADC pins, both buttons and the buzzer `pin:`. The
+  component selects the right GPIO register form at compile time, so only
+  `board:` changes if you use a different module.

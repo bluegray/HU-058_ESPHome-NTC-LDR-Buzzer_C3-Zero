@@ -44,6 +44,12 @@ is active, and you activate it again in each new terminal.
 
 ## Which ESP32
 
+The checked-in `clock.yaml` now targets an **ESP32-C3 Zero**
+(`esp32-c3-devkitm-1`), using the mapping in the top-level README. The
+component still builds for the classic **ESP32-WROOM-32** described below; set
+`board: esp32dev` and use the WROOM wiring in `../../docs/wiring.md` if you
+want that instead.
+
 I used a plain **ESP32-WROOM-32** devkit, the common 30 or 38 pin board that
 sells for a few dollars. Anything in that family works unchanged: WROOM-32,
 WROVER, DevKitC, NodeMCU-32S. If the listing says ESP32 with no letter after
@@ -56,21 +62,11 @@ higher pin.
 
 ### S2, S3, C3 and C6
 
-These need a small code change, and I have not tried any of them.
-
-Those chips declare the GPIO output registers as unions, so the bare
-assignments in `send_pair_()` do not compile:
-
-```cpp
-GPIO.out_w1ts = set;      // classic ESP32
-GPIO.out_w1ts.val = set;  // everything newer
-```
-
-Nine lines in that one function, plus `board:` in `clock.yaml` changed to match
-your module. Nothing else should need touching.
-
-Config validation will not warn you, because the component accepts any ESP32.
-The first sign of trouble is a compile error inside `aip33628.cpp`.
+`aip33628.cpp` selects the GPIO register form at compile time, so the frame
+loop builds for both the classic ESP32 and the newer chips. For a C3 Zero, set
+`board: esp32-c3-devkitm-1` and use the mapping in the top-level README; its
+logger is on the USB Serial/JTAG because the buttons use GPIO20/21. I have not
+run these targets on hardware.
 
 ### ESP8266
 
@@ -100,7 +96,7 @@ Do not add one there.
 esphome run clock.yaml
 ```
 
-USB flashing on a WROOM-32 devkit may need to hold down BOOT while trying to program. Auto-reset into the bootloader does not work on every board.
+USB flashing on a WROOM-32 devkit may need to hold down BOOT while trying to program. Auto-reset into the bootloader does not work on every board. On the C3 Zero, use its USB-C port; hold BOOT and tap RESET only if it does not enter download mode.
 
 Once it is on the network, updates go over the air, and the API carries the log stream:
 
@@ -134,18 +130,19 @@ every effect entity live on the Home Assistant side.
 ## Wiring
 
 Six wires into the empty DIP-16 MCU footprint. Four for the display, two for
-the buttons, plus a ground.
+the buttons, plus a ground. The NTC, LDR and buzzer are on GPIO3, GPIO4 and
+GPIO5; the top-level README has the full mapping.
 
 Full build notes are in `../../docs/wiring.md`.
 
-| ESP32 | Pin | Net |
+| C3 GPIO | Pin | Net |
 | --- | --- | --- |
-| GPIO22 | 14 on HU-058D; 16 on HU-058 / HU-058SE | CLK, driver 1 |
-| GPIO21 | 5 | DATA, driver 1 |
-| GPIO19 | 1 | CLK_1, driver 2 |
-| GPIO18 | 2 | DATA_1, driver 2 |
-| GPIO32 | 9 | S1, top button |
-| GPIO33 | 10 | S2, bottom button |
+| GPIO0 | 14 on HU-058D; 16 on HU-058 / HU-058SE | CLK, driver 1 |
+| GPIO1 | 5 | DATA, driver 1 |
+| GPIO6 | 1 | CLK_1, driver 2 |
+| GPIO7 | 2 | DATA_1, driver 2 |
+| GPIO20 | 9 | S1, top button |
+| GPIO21 | 10 | S2, bottom button |
 | GND | 8 | GND |
 
 ## Configuration
@@ -153,10 +150,10 @@ Full build notes are in `../../docs/wiring.md`.
 ```yaml
 aip33628:
   id: panel
-  clk_pin: GPIO22
-  data_pin: GPIO21
-  clk2_pin: GPIO19
-  data2_pin: GPIO18
+  clk_pin: GPIO0
+  data_pin: GPIO1
+  clk2_pin: GPIO6
+  data2_pin: GPIO7
   time_id: ha_time
   twelve_hour: true
   blink_colon: true
