@@ -32,14 +32,14 @@ Install it into a virtual environment. Recent Linux distributions and Homebrew
 refuse a plain `pip install` into the system Python, and a user install puts
 the `esphome` command somewhere that is often not on PATH.
 
-```
-python3 -m venv venv
-source venv/bin/activate
+```bash
+python3.14 -m venv venv314
+source venv314/bin/activate
 pip install --upgrade esphome
 ```
 
-On Windows, create it with `py -m venv venv` and activate with
-`venv\Scripts\activate`. Every `esphome` command below assumes the environment
+On Windows, create it with `py -3.14 -m venv venv314` and activate with
+`venv314\Scripts\activate`. Every `esphome` command below assumes the environment
 is active, and you activate it again in each new terminal.
 
 ## Which ESP32
