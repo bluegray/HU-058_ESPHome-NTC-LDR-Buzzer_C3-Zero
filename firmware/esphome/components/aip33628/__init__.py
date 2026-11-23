@@ -4,6 +4,11 @@ from esphome import pins
 from esphome.components import time as time_
 from esphome.const import CONF_ID, CONF_NUMBER, PLATFORM_ESP32
 
+try:
+    from esphome.components.esp32 import include_builtin_idf_component
+except ImportError:
+    include_builtin_idf_component = None
+
 CODEOWNERS = ["@misterblack1"]
 ESP_PLATFORMS = [PLATFORM_ESP32]
 
@@ -64,6 +69,11 @@ CONFIG_SCHEMA = cv.Schema(
 
 
 async def to_code(config):
+    # The frame timer uses the IDF GPTimer driver, which ESPHome excludes from
+    # ESP-IDF builds by default to trim compile time.
+    if include_builtin_idf_component is not None:
+        include_builtin_idf_component("esp_driver_gptimer")
+
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 

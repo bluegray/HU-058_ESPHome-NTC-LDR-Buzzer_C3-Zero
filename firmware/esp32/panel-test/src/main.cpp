@@ -9,6 +9,7 @@
 #include <Arduino.h>
 #include <esp_timer.h>
 #include <sdkconfig.h>
+#include <soc/gpio_struct.h>
 #include <string.h>
 
 // The GPIO output registers are plain words on the classic ESP32 but unions on
@@ -428,12 +429,12 @@ void loop() {
             break;
         case '+':
             if (g_current < 0xF)
-                g_current++;
+                g_current = g_current + 1;
             Serial.printf("IS 0x%X\n", g_current);
             break;
         case '-':
             if (g_current > 0)
-                g_current--;
+                g_current = g_current - 1;
             Serial.printf("IS 0x%X\n", g_current);
             break;
         case '?':
