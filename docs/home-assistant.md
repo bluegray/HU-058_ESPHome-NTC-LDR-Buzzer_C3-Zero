@@ -1,6 +1,8 @@
 # Home Assistant reference
 
-Needs ESPHome 2026.8.0 or newer.
+Needs ESPHome 2026.8.0 or newer on Python 3.11 or newer. See the top-level
+README for the venv setup. The current target is an ESP32-C3 Zero; its pin
+mapping and hardware mods are in the top-level README.
 
 ## Naming
 

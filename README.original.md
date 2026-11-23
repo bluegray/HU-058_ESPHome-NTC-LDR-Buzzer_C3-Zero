@@ -1,5 +1,9 @@
 # Open firmware for the HU-058D WiFi clock with added buzzer, NTC and light sensor
 
+> Historical note: this is the original ESP32-WROOM-32 write-up, kept for
+> reference. The current ESP32-C3 Zero firmware and pin mapping are in
+> [README.md](README.md) and [firmware/esphome/README.md](firmware/esphome/README.md).
+
 I have added support for buzzer, temp and light sensor. The 5V needs to be cut and 3.3V connected instead. Only clock.yaml has been changed. Added temperature, beep with changeable duration and frequency, and light (0-100%) to Home Assistant device dashboard. 
 
 The new connections are:

@@ -180,7 +180,9 @@ Implementation notes:
   two passes through ESPHome's `ISRInternalGPIOPin`, which is what makes a
   40us sub-frame practical. It requires all four pins to sit below GPIO32,
   since one store only reaches the low output register, and the component
-  rejects a higher pin at config time.
+  rejects a higher pin at config time. The register form is selected at compile
+  time, so the same loop builds on the ESP32-S2/S3/C3/C6; on the C3 every header
+  pin is already below GPIO32.
 
 The scan runs from a `gptimer` interrupt rather than an `esp_timer`. The
 esp_timer task dispatch path runs at task priority on core 0 next to the WiFi

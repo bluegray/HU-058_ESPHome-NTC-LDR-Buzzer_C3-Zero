@@ -9,7 +9,8 @@ and the GPIO register macros. It is also the fastest way to find out which LED
 positions your particular board has fitted.
 
 The mapping it uses is documented in `../../../docs/display-map.md` and matches
-the ESPHome config in `../../esphome/clock.yaml`.
+the ESPHome config in `../../esphome/clock.yaml`. The full 16-pin mapping and
+the C3 wiring notes are in the top-level README.
 
 The color scheme here is the simple one: three duty levels per channel, from
 at most two sub-frames per COM pair, which is close to what the stock 8051
@@ -19,11 +20,11 @@ sixteen levels. Start here, then read that if you want more colors.
 ## Wiring
 
 Four signals and a ground, into the empty DIP-16 MCU footprint. Do not install
-the 8051 or the ESP-01S, and pull them if you already did. Two devices on one
-bus will fight.
+the STC8G1K17 (the stock 8051) or the ESP-01S, and pull them if you already
+did. Two devices on one bus will fight.
 
 Full build notes are in `../../../docs/wiring.md`; its wire table is the
-WROOM-32 version, while the C3 pins are in the table above.
+WROOM-32 version, while the C3 pins are in the table below.
 
 | C3 GPIO | Socket pin | Net | Use |
 | --- | --- | --- | --- |
@@ -40,14 +41,18 @@ port for flashing and the serial monitor.
 
 ## Build
 
-```
+```bash
 pio run -t upload
 pio device monitor
 ```
 
+The `platformio.ini` selects `esp32-c3-devkitm-1` and builds with
+`ARDUINO_USB_CDC_ON_BOOT=1`, so the monitor works over the C3's USB-C port. If
+the upload does not start, hold BOOT, tap RESET, release BOOT, and retry.
+
 ## Commands
 
-Single keypresses over the serial monitor at 115200.
+Single keypresses over the USB serial monitor.
 
 | Key | Pattern |
 | --- | --- |
@@ -67,7 +72,8 @@ your board's real population straight off the panel.
 
 ## Levels
 
-The 3.3V outputs of the ESP32-C3 drive the panel perfectly without a level shifter
+The 3.3V outputs of the ESP32-C3 drive the panel perfectly without a level
+shifter.
 
 If levels ever are marginal the symptom is not a dead display but an
 intermittent one, because the latch triggers on a data edge while the clock is

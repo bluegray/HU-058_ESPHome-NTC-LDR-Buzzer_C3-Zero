@@ -6,8 +6,9 @@ checked-in ESPHome config; the full project write-up is in the original readme.
 
 ## Original readme
 
-The full project description, wiring notes, calibration details, example Home
-Assistant automations and firmware overview live in the original readme:
+The original ESP32-WROOM-32 write-up is kept for reference. It has the
+conversion photos, calibration notes, example Home Assistant automations and
+the older firmware overview:
 
 👉 **[README.original.md](README.original.md)**
 
@@ -17,9 +18,11 @@ Assistant automations and firmware overview live in the original readme:
 | --- | --- |
 | `docs/` | Wiring, hardware, protocol, display map, LED layout, Home Assistant entities |
 | `firmware/` | ESPHome component/config and the bare-metal PlatformIO panel test |
+| [`firmware/esphome/README.md`](firmware/esphome/README.md) | ESPHome setup, wiring, build and configuration |
+| [`firmware/esp32/panel-test/README.md`](firmware/esp32/panel-test/README.md) | Bare-metal bench panel test |
 | `reference/` | Datasheet and the C3 Zero pinout |
 
-See the original readme for the documentation index and details.
+See the original readme for the original WROOM-32 details and image references.
 
 ## ESP32-C3 Zero pins and features
 
@@ -75,10 +78,10 @@ revision before soldering.
 - The NTC and LDR are on IO3/IO4: ADC1 is only on IO0–IO4, IO2 is a strapping
   pin, and IO5 is ADC2, which cannot be used while the Wi-Fi driver is running.
 - GPIO20 and GPIO21 are UART0. If the logger stays on UART0 its TX will
-  drive the S2 net and its RX setup can disturb S1, so move the logger to the
-  USB Serial/JTAG (`hardware_uart: USB_SERIAL_JTAG`, if your ESPHome version
-  supports it) or turn UART0 logging off. The ROM may also print its boot
-  banner on IO21 at reset, so S2 may toggle briefly before the firmware starts.
+  drive the S2 net and its RX setup can disturb S1, so `clock.yaml` uses the
+  USB Serial/JTAG (`hardware_uart: USB_SERIAL_JTAG`) on the ESP-IDF framework.
+  The ROM may also print its boot banner on IO21 at reset, so S2 may toggle
+  briefly before the firmware starts.
 - With socket pin 11 left high-impedance, R5 pulls the C3 pin towards the +5V
   PNP emitter and the ESD clamp holds it a little above 3.3V. The C3 is not 5V
   tolerant; a clamp or level shifter is the clean fix. Per `docs/wiring.md` the
@@ -89,8 +92,133 @@ revision before soldering.
   cold). The original conversion already cuts that 5V feed and connects 3.3V
   instead; if you have not done that mod, do it (or add a divider) before
   connecting them to GPIO3/GPIO4.
-- `clock.yaml` already uses this mapping: `board: esp32-c3-devkitm-1`,
-  `clk_pin`/`data_pin` = CLK/DATA, `clk2_pin`/`data2_pin` = CLK_1/DATA_1, the
-  ADC pins, both buttons and the buzzer `pin:`. The component selects the
-  right GPIO register form at compile time, so only `board:` changes if you
-  use a different module.
+- `clock.yaml` already uses this mapping: `board: esp32-c3-devkitm-1` on the
+  ESP-IDF framework, `clk_pin`/`data_pin` = CLK/DATA, `clk2_pin`/`data2_pin` =
+  CLK_1/DATA_1, the ADC pins, both buttons and the buzzer `pin:`. The component
+  selects the right GPIO register form at compile time and re-enables
+  `esp_driver_gptimer` for ESP-IDF, so only `board:` changes if you use a
+  different module.
+
+## Hardware mods: sensors and buzzer
+
+The stock board feeds both sensor dividers from +5V and switches the buzzer
+through a PNP from the 5V rail. The C3's ADC and GPIOs are 3.3V parts, so two
+mods are needed.
+
+### Sensors, socket pins 3 and 4
+
+R1 and R2 are 10K pull-ups to +5V; R3 and R4 are the LDR and NTC to ground. At
+room temperature and in normal light the divider is in range, but in the dark
+(LDR) or cold (NTC) the top of the divider can exceed 3.3V. The C3 ADC pins
+are not 5V tolerant.
+
+- Cut the +5V feed to the tops of R1 and R2.
+- Wire the C3's 3V3 pin to those tops instead.
+- Leave the sensors, R3/R4 and the ground legs as they are.
+
+This is the mod shown in the original readme's `docs/images/esp32 cut.png` and
+`docs/images/esp32 3_3V.png`. The display drivers stay on 5V; only the sensor
+dividers move to 3.3V.
+
+### Buzzer, socket pin 11
+
+Pin 11 feeds R5 (10K) into the base of Q1, an S8550 PNP with its emitter at
++5V and its collector driving the buzzer. Pulling the pin low turns the PNP on;
+leaving it high-impedance turns it off. A 3.3V high is not off: it leaves 1.7V
+across the base-emitter junction and the buzzer can sound.
+
+- Connect socket pin 11 to GPIO5.
+- Keep GPIO5 high-impedance when idle; drive it low to beep.
+- The +5V base network pulls the pin above 3.3V while it is high-impedance.
+  Add a 3.3V clamp or level shifter for margin; the 10K limits the current, so
+  the direct connection usually works.
+
+## ESPHome requirements
+
+- ESPHome **2026.8.0 or newer**. This repo was built with **2026.11.0**.
+- Python **3.11 or newer**. The working environment here is Python **3.14.10**
+  in `firmware/esphome/venv314`.
+- A virtual environment. Recent system Pythons refuse a plain `pip install`,
+  and a venv keeps ESPHome's dependencies separate from the rest of the
+  system. A venv is tied to the Python that created it; you cannot change its
+  Python version in place, so make a new venv if the interpreter changes.
+
+Create it once:
+
+```bash
+cd firmware/esphome
+python3.14 -m venv venv314
+source venv314/bin/activate
+pip install --upgrade esphome
+```
+
+On Windows use `py -3.14 -m venv venv314` and activate with
+`venv314\Scripts\activate`. The flashing commands below assume the environment
+is active.
+
+## Flashing
+
+### Panel test
+
+See [`firmware/esp32/panel-test/README.md`](firmware/esp32/panel-test/README.md)
+for the diagnostic firmware details.
+
+1. Wire the four display signals and ground into the empty DIP-16 socket. Remove
+   the STC8G1K17 and ESP-01S first.
+2. Connect the ESP32-C3 Zero over USB-C.
+3. Build and upload:
+
+   ```bash
+   cd firmware/esp32/panel-test
+   pio run -t upload
+   ```
+
+4. Open the serial monitor:
+
+   ```bash
+   pio device monitor
+   ```
+
+5. Press `?` for the command list. Press `l` for the lamp test, or `w` to walk
+   the LED positions.
+
+If the upload does not start, hold BOOT, tap RESET, release BOOT, and retry.
+
+### Clock firmware
+
+See [`firmware/esphome/README.md`](firmware/esphome/README.md) for the full
+setup, wiring and configuration reference.
+
+1. With the venv active, copy the secrets template:
+
+   ```bash
+   cd firmware/esphome
+   cp secrets.yaml.example secrets.yaml
+   ```
+
+2. Fill in the Wi-Fi, timezone, API key, OTA and fallback AP values.
+   `ap_password` is the password for the clock's own fallback network. If it
+   cannot join your Wi-Fi, it raises an access point named `WiFi Clock Setup`
+   (the friendly name plus ` Setup`, from `wifi: ap: ssid` in `clock.yaml`)
+   and runs a captive portal so you can enter new credentials. Use 8 to 63
+   characters; it only appears when the station connection fails.
+3. Build and flash over USB the first time:
+
+   ```bash
+   esphome run clock.yaml
+   ```
+
+4. Update over the air after that:
+
+   ```bash
+   esphome run clock.yaml --device wifi-clock.local
+   ```
+
+5. Follow the logs:
+
+   ```bash
+   esphome logs clock.yaml --device wifi-clock.local
+   ```
+
+Run `esphome config clock.yaml` before an OTA. The first flash should use USB,
+and if it does not start, hold BOOT and tap RESET.

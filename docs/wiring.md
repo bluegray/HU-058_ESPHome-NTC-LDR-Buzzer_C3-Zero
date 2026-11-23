@@ -1,5 +1,8 @@
 # Wiring an ESP32 into the clock
 
+> This page documents the original ESP32-WROOM-32 build. For the ESP32-C3 Zero,
+> use the mapping in the [top-level README](../README.md).
+
 The kit ships as loose parts. The display half is already assembled on the
 front of the board, so what you solder is the through-hole side, and the
 easiest conversion is simply not installing the parts you are replacing.
