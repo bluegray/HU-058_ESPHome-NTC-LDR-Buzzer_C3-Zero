@@ -48,11 +48,11 @@ are removed, as described in `docs/wiring.md`.
 
 | Socket pin | Net | C3 GPIO | Notes |
 | --- | --- | --- | --- |
-| 1 | CLK_2 | GPIO6 (IO6) | Display bus 2 clock, output |
-| 2 | DATA_2 | GPIO7 (IO7) | Display bus 2 data, output |
+| 1 | CLK_1 | GPIO6 (IO6) | Display bus 2 clock, output |
+| 2 | DATA_1 | GPIO7 (IO7) | Display bus 2 data, output |
 | 3 | R_T | GPIO3 (IO3) | NTC, ADC1 channel 3 |
 | 4 | R_P | GPIO4 (IO4) | LDR, ADC1 channel 4 |
-| 5 | DATA_1 | GPIO1 (IO1) | Display bus 1 data, output |
+| 5 | DATA | GPIO1 (IO1) | Display bus 1 data, output |
 | 6 | +5V | 5V | Optional; powering via P3 works too |
 | 7 | — | — | Not connected |
 | 8 | GND | GND | Common ground |
@@ -61,13 +61,9 @@ are removed, as described in `docs/wiring.md`.
 | 11 | R_B | GPIO5 (IO5) | Buzzer, see the note below |
 | 12 | — | — | Not connected |
 | 13 | — | — | Not connected |
-| 14 | CLK_1 on HU-058D, RTC on HU-058/HU-058SE | GPIO0 (IO0) | Display bus 1 clock on the HU-058D only |
+| 14 | CLK on HU-058D, RTC on HU-058/HU-058SE | GPIO0 (IO0) | Display bus 1 clock on the HU-058D only |
 | 15 | RXD_2 | — | ESP-01S serial link on the HU-058D, unused after removal |
-| 16 | CLK_1 on HU-058/HU-058SE, TXD_2 on HU-058D | GPIO0 (IO0) | Display bus 1 clock on the HU-058/HU-058SE only |
-
-Here `CLK_n`/`DATA_n` mean display bus n. The original docs label bus 1 as
-plain `CLK`/`DATA` and bus 2 as `CLK_1`/`DATA_1`; the rename only makes the
-numbering consistent.
+| 16 | CLK on HU-058/HU-058SE, TXD_2 on HU-058D | GPIO0 (IO0) | Display bus 1 clock on the HU-058/HU-058SE only |
 
 Socket pins 14 and 16 carry the same display bus 1 clock on different board
 revisions, so connect whichever one is CLK on your board — check the silkscreen
@@ -94,7 +90,7 @@ revision before soldering.
   instead; if you have not done that mod, do it (or add a divider) before
   connecting them to GPIO3/GPIO4.
 - `clock.yaml` already uses this mapping: `board: esp32-c3-devkitm-1`,
-  `clk_pin`/`data_pin` = CLK_1/DATA_1, `clk2_pin`/`data2_pin` =
-  CLK_2/DATA_2, the ADC pins, both buttons and the buzzer `pin:`. The
-  component selects the right GPIO register form at compile time, so only
-  `board:` changes if you use a different module.
+  `clk_pin`/`data_pin` = CLK/DATA, `clk2_pin`/`data2_pin` = CLK_1/DATA_1, the
+  ADC pins, both buttons and the buzzer `pin:`. The component selects the
+  right GPIO register form at compile time, so only `board:` changes if you
+  use a different module.
