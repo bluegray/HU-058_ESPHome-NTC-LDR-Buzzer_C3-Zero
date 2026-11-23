@@ -144,6 +144,76 @@ shifter removes the dependence on it. Even clamped, the pin sits above the
 datasheet's VDD + 0.3V limit, which is why the clamp is worth adding for
 margin.
 
+## Sensor calibration
+
+The NTC and LDR both use the C3's ADC. `clock.yaml` turns the NTC voltage into
+temperature through three sensors, and maps the LDR voltage to a percentage.
+Both assume the divider tops are on 3.3V, as in the mods above.
+
+### NTC temperature
+
+The chain is `ntc_adc` → `ntc_resistance` → `temperature`.
+
+| Setting | Value | What it does |
+| --- | --- | --- |
+| `attenuation` | `auto` | ADC input range. `auto` lets ESPHome pick one. If the resistance reads low or jumps, set the widest range your C3 supports (often `12db`); a clipped input gives a low, noisy result. |
+| `update_interval` | `5s` | How often the ADC is sampled. |
+| `configuration` | `DOWNSTREAM` | The NTC is the lower leg of the divider, to ground. |
+| `resistor` | `10kOhm` | The fixed upper resistor, `R1`/`R2` on the board. Check it against the physical part. |
+| `reference_voltage` | `3.3V` | The voltage at the top of the divider after the 3.3V mod. |
+| `b_constant` | `3950` | The NTC's beta slope, from its datasheet. |
+| `reference_temperature` | `25°C` | The temperature for the nominal resistance. |
+| `reference_resistance` | `10kOhm` | The NTC's resistance at 25°C. |
+
+The last three rows describe the NTC, not the board:
+
+- `reference_resistance` is the NTC's resistance at `reference_temperature`.
+  The shipped `10k` at `25°C` is a common pair.
+- `b_constant` is the curve's slope, quoted by the datasheet as `B25/50` or
+  `B25/85`.
+
+One resistance reading cannot tell you B. Take it from the datasheet, or
+calculate it from two resistance/temperature pairs at least 15–20°C apart:
+
+```text
+B = ln(R1 / R2) / (1/T1 - 1/T2)      temperatures in kelvin
+```
+
+The curve always passes through the reference point: with the shipped values,
+10k reads 25°C. That allows a one-point calibration.
+
+`ntc_resistance` is currently internal because it has no `name:`. ESPHome only
+publishes a sensor to Home Assistant when it has one. Add
+`name: NTC Resistance`, flash the board, and the computed resistance appears
+as an entity.
+
+1. Hold the NTC at a known, stable temperature.
+2. Read `ntc_resistance` and set `reference_resistance` to that value.
+3. Set `reference_temperature` to the known temperature.
+
+Leave `b_constant` alone. If you cannot read the resistance, you can instead
+adjust `reference_temperature` until the display matches the thermometer; that
+shifts the whole curve.
+
+One point corrects a constant offset from part tolerance, the divider or the
+ADC. It cannot correct a wrong `b_constant`; that shows up as error growing as
+you move away from the calibration temperature.
+
+Expect about ±1°C from the NTC and the C3 ADC together, and more near the ends
+of the ADC range. At 25°C a 10k/10k divider sits at 1.65V, which is a good spot.
+
+### LDR light percentage
+
+`calibrate_linear` maps the ADC voltage to a percentage:
+
+- `0.0 -> 100.0`: 0V is bright, so 100%.
+- `3.3 -> 0.0`: 3.3V is dark, so 0%.
+- `method: exact` makes the map pass through both points.
+- `clamp` holds the result between 0 and 100.
+
+This is a relative scale, not lux. LDR resistance is roughly logarithmic with
+light, so the percentage is a usable indication rather than a measurement.
+
 ## ESPHome requirements
 
 - ESPHome **2026.8.0 or newer**. This repo was built with **2026.11.0**.

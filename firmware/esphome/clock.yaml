@@ -207,7 +207,7 @@ sensor:
     sensor: ntc_adc
     id: ntc_resistance
     configuration: DOWNSTREAM
-    resistor: 10kOhm
+    resistor: 10kΩ
     reference_voltage: 3.3V
 
   - platform: ntc
@@ -216,9 +216,15 @@ sensor:
     name: Temperature
     calibration:
       b_constant: 3950
-      reference_temperature: 25°C
-      reference_resistance: 10kOhm
+      reference_temperature: 23.8°C # 25°C
+      reference_resistance: 9834Ω # 10kΩ
     accuracy_decimals: 1
+    on_value:
+      - lambda: |-
+          ESP_LOGI("ntc", "ADC %.3f V, R %.0f ohm, T %.1f C",
+                   id(ntc_adc).state,
+                   id(ntc_resistance).state,
+                   x);
 
   - platform: adc
     pin: GPIO4
@@ -251,6 +257,8 @@ binary_sensor:
     filters:
       - delayed_on: 20ms
       - delayed_off: 20ms
+    on_press:
+      - script.execute: donkey_kong
 
   - platform: gpio
     id: button_2
@@ -264,6 +272,17 @@ binary_sensor:
     filters:
       - delayed_on: 20ms
       - delayed_off: 20ms
+    on_press:
+      - lambda: |-
+          if (!id(temperature).has_state() ||
+              std::isnan(id(temperature).state))
+            return;
+
+          id(panel)->show_number(
+            (int) roundf(id(temperature).state),
+            "C",
+            5000
+          );
 
 script:
   - id: buzzer_beep
@@ -277,6 +296,78 @@ script:
           id: buzzer_output
           level: !lambda "return id(buzzer_volume).state / 200.0f;"
       - delay: !lambda "return (uint32_t) id(buzzer_duration).state;"
+      - output.turn_off: buzzer_output
+
+  # Donkey Kong theme, transcribed from the Home Assistant automation in
+  # README.original.md. Each frequency is held for the delay that follows it.
+  - id: donkey_kong
+    mode: restart
+    then:
+      - output.turn_on: buzzer_output
+      - output.set_level:
+          id: buzzer_output
+          level: !lambda "return id(buzzer_volume).state / 200.0f;"
+
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 262}
+      - delay: 275ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 262}
+      - delay: 280ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 440}
+      - delay: 1380ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 330}
+      - delay: 280ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 392}
+      - delay: 275ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 349}
+      - delay: 280ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 294}
+      - delay: 1660ms
+
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 294}
+      - delay: 275ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 294}
+      - delay: 275ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 466}
+      - delay: 1385ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 392}
+      - delay: 270ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 440}
+      - delay: 280ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 392}
+      - delay: 275ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 330}
+      - delay: 1655ms
+
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 330}
+      - delay: 285ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 330}
+      - delay: 270ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 523}
+      - delay: 1390ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 440}
+      - delay: 270ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 466}
+      - delay: 280ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 523}
+      - delay: 275ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 587}
+      - delay: 1660ms
+
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 349}
+      - delay: 280ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 392}
+      - delay: 280ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 440}
+      - delay: 1380ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 330}
+      - delay: 275ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 349}
+      - delay: 275ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 392}
+      - delay: 275ms
+      - output.ledc.set_frequency: {id: buzzer_output, frequency: 349}
+      - delay: 1650ms
+
       - output.turn_off: buzzer_output
 
 switch:
