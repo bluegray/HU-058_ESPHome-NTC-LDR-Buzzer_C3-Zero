@@ -133,6 +133,17 @@ across the base-emitter junction and the buzzer can sound.
   Add a 3.3V clamp or level shifter for margin; the 10K limits the current, so
   the direct connection usually works.
 
+The current limit is what makes the direct connection safe. The C3 pin is not
+5V tolerant, but each GPIO has an internal ESD clamp diode to the 3.3V rail.
+When the pin is high-impedance, R5 pulls it up until that diode conducts, so
+the pin settles near 3.9V instead of 5V. The diode carries only about
+`(5V - 3.9V) / 10K = 0.1mA`, far below its rating. Fit a lower-value R5 and
+the clamp current rises until it can damage the pin or inject into the 3.3V
+rail. The 10K is what keeps the direct connection safe; a clamp or level
+shifter removes the dependence on it. Even clamped, the pin sits above the
+datasheet's VDD + 0.3V limit, which is why the clamp is worth adding for
+margin.
+
 ## ESPHome requirements
 
 - ESPHome **2026.8.0 or newer**. This repo was built with **2026.11.0**.
