@@ -216,7 +216,7 @@ sensor:
     name: Temperature
     calibration:
       b_constant: 3950
-      reference_temperature: 23.6°C # 25°C
+      reference_temperature: 23.5°C # 25°C
       reference_resistance: 6941Ω # 10kΩ
     accuracy_decimals: 1
     on_value:
