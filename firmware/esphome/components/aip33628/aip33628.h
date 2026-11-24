@@ -5,7 +5,6 @@
 #include "esphome/core/component.h"
 #include "esphome/core/hal.h"
 
-
 #include <driver/gptimer.h>
 
 namespace esphome {
