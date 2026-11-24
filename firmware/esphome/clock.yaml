@@ -216,8 +216,8 @@ sensor:
     name: Temperature
     calibration:
       b_constant: 3950
-      reference_temperature: 23.8°C # 25°C
-      reference_resistance: 9834Ω # 10kΩ
+      reference_temperature: 23.6°C # 25°C
+      reference_resistance: 6941Ω # 10kΩ
     accuracy_decimals: 1
     on_value:
       - lambda: |-
@@ -243,6 +243,31 @@ sensor:
       - clamp:
           min_value: 0.0
           max_value: 100.0
+    on_value:
+      - if:
+          condition:
+            switch.is_on: auto_brightness
+          then:
+            - script.execute: apply_auto_brightness
+
+  - platform: template
+    name: LED Current Step
+    id: led_current_step
+    lambda: return id(panel)->get_current_step();
+    update_interval: 1s
+    accuracy_decimals: 0
+    icon: mdi:brightness-percent
+
+  - platform: template
+    name: LED Sink Current
+    id: led_sink_current
+    lambda: return id(panel)->get_current_ma();
+    update_interval: 1s
+    unit_of_measurement: mA
+    accuracy_decimals: 1
+    device_class: current
+    state_class: measurement
+    icon: mdi:current-dc
 
 binary_sensor:
   - platform: gpio
@@ -370,6 +395,29 @@ script:
 
       - output.turn_off: buzzer_output
 
+  - id: apply_auto_brightness
+    mode: single
+    then:
+      - lambda: |-
+          if (!id(display).current_values.is_on())
+            return;
+
+          // Ambient light 0-50% maps to 5-60% display brightness. Raise
+          // LIGHT_MAX if the room reads higher than that.
+          const float LIGHT_MIN = 0.0f;
+          const float LIGHT_MAX = 50.0f;
+          const float BRIGHT_MIN = 0.05f;
+          const float BRIGHT_MAX = 0.60f;
+
+          float t = clamp((id(light_sensor).state - LIGHT_MIN) /
+                              (LIGHT_MAX - LIGHT_MIN),
+                          0.0f, 1.0f);
+          float b = BRIGHT_MIN + t * (BRIGHT_MAX - BRIGHT_MIN);
+
+          auto call = id(display).turn_on();
+          call.set_brightness(b);
+          call.perform();
+
 switch:
   - platform: template
     id: twelve_hour_mode
@@ -390,6 +438,15 @@ switch:
       - lambda: id(panel)->set_blink_colon(true);
     turn_off_action:
       - lambda: id(panel)->set_blink_colon(false);
+
+  - platform: template
+    id: auto_brightness
+    name: Automatic Brightness
+    icon: mdi:brightness-auto
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    turn_on_action:
+      - script.execute: apply_auto_brightness
 
 output:
   - platform: ledc
